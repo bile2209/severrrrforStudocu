@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Studocu Helper — Admin</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap');
+  :root {
+    --bg:#0e0f11; --surface:#16181c; --border:#2a2d34;
+    --accent:#00e5a0; --accent2:#4d9fff; --danger:#ff5e5e;
+    --warn:#f1c40f; --text:#e8eaf0; --sub:#6b7280;
+    --mono:'IBM Plex Mono',monospace; --sans:'IBM Plex Sans Thai',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh}
+
+  /* LOGIN */
+  #login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:20px}
+  .login-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:36px 40px;width:340px;display:flex;flex-direction:column;gap:16px}
+  .login-box h2{font-family:var(--mono);font-size:15px;color:var(--accent);letter-spacing:1px}
+  .login-box input{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-family:var(--mono);font-size:13px;width:100%}
+  .login-box input:focus{outline:none;border-color:var(--accent)}
+  .login-box button{background:var(--accent);color:#000;border:none;border-radius:8px;padding:11px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--mono)}
+  .login-box button:hover{opacity:0.9}
+  .login-error{color:var(--danger);font-size:12px;font-family:var(--mono);text-align:center}
+
+  /* MAIN */
+  #main-screen{display:none}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;justify-content:space-between}
+  .logo{font-family:var(--mono);font-size:14px;font-weight:600;letter-spacing:1.5px}
+  .logo span{color:var(--accent)}
+  .header-right{display:flex;align-items:center;gap:12px}
+  .tag{font-family:var(--mono);font-size:10px;background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.2);color:var(--accent);padding:3px 9px;border-radius:4px}
+  .btn-logout{background:none;border:1px solid var(--border);color:var(--sub);border-radius:6px;padding:5px 12px;cursor:pointer;font-size:12px;font-family:var(--mono)}
+  .btn-logout:hover{border-color:var(--danger);color:var(--danger)}
+
+  .container{max-width:1100px;margin:0 auto;padding:28px 24px;display:flex;flex-direction:column;gap:24px}
+
+  /* STATS */
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px}
+  .stat-label{font-size:11px;font-family:var(--mono);color:var(--sub);margin-bottom:8px}
+  .stat-val{font-size:26px;font-weight:700;font-family:var(--mono)}
+  .stat-val.green{color:var(--accent)}
+  .stat-val.blue{color:var(--accent2)}
+  .stat-val.red{color:var(--danger)}
+  .stat-val.yellow{color:var(--warn)}
+
+  /* CREATE PANEL */
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px 24px}
+  .panel-title{font-family:var(--mono);font-size:12px;color:var(--sub);letter-spacing:1px;margin-bottom:18px;text-transform:uppercase}
+  .create-form{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:11px;font-family:var(--mono);color:var(--sub)}
+  .field input,.field select{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:9px 13px;color:var(--text);font-family:var(--mono);font-size:13px;min-width:120px}
+  .field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
+  .field select option{background:var(--bg)}
+  .btn-create{background:var(--accent);color:#000;border:none;border-radius:7px;padding:9px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--mono);white-space:nowrap}
+  .btn-create:hover{opacity:0.88}
+
+  /* NEW KEYS OUTPUT */
+  #new-keys-output{margin-top:16px;display:none}
+  .new-keys-label{font-size:11px;font-family:var(--mono);color:var(--accent);margin-bottom:8px}
+  .key-chip{background:rgba(0,229,160,.07);border:1px solid rgba(0,229,160,.2);border-radius:6px;padding:7px 14px;font-family:var(--mono);font-size:13px;color:var(--accent);display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .btn-copy{background:none;border:1px solid rgba(0,229,160,.3);color:var(--accent);border-radius:4px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:var(--mono)}
+  .btn-copy:hover{background:rgba(0,229,160,.1)}
+
+  /* SEARCH */
+  .search-row{display:flex;gap:10px;align-items:center}
+  .search-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:9px 14px;color:var(--text);font-family:var(--mono);font-size:13px}
+  .search-input:focus{outline:none;border-color:var(--accent2)}
+  .filter-select{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:9px 13px;color:var(--text);font-family:var(--mono);font-size:12px}
+  .btn-refresh{background:none;border:1px solid var(--border);color:var(--sub);border-radius:7px;padding:9px 14px;cursor:pointer;font-size:12px;font-family:var(--mono)}
+  .btn-refresh:hover{border-color:var(--accent2);color:var(--accent2)}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto;margin-top:14px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{font-family:var(--mono);font-size:10px;color:var(--sub);text-transform:uppercase;letter-spacing:.8px;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+  td{padding:10px 12px;border-bottom:1px solid rgba(42,45,52,.6);vertical-align:middle}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  .key-text{font-family:var(--mono);font-size:12px;color:var(--accent2);letter-spacing:.5px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-family:var(--mono);font-weight:600}
+  .badge-active{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.2)}
+  .badge-inactive{background:rgba(255,94,94,.1);color:var(--danger);border:1px solid rgba(255,94,94,.2)}
+  .badge-expired{background:rgba(241,196,15,.1);color:var(--warn);border:1px solid rgba(241,196,15,.2)}
+  .badge-plan{background:rgba(77,159,255,.1);color:var(--accent2);border:1px solid rgba(77,159,255,.2)}
+  .days-left{font-family:var(--mono);font-size:11px}
+  .days-ok{color:var(--accent)}
+  .days-warn{color:var(--warn)}
+  .days-exp{color:var(--danger)}
+
+  /* ACTION BUTTONS IN TABLE */
+  .action-row{display:flex;gap:6px}
+  .btn-sm{border:none;border-radius:5px;padding:4px 9px;font-size:11px;font-family:var(--mono);cursor:pointer;font-weight:600}
+  .btn-toggle-on{background:rgba(255,94,94,.1);color:var(--danger);border:1px solid rgba(255,94,94,.25)}
+  .btn-toggle-on:hover{background:rgba(255,94,94,.2)}
+  .btn-toggle-off{background:rgba(0,229,160,.1);color:var(--accent);border:1px solid rgba(0,229,160,.25)}
+  .btn-toggle-off:hover{background:rgba(0,229,160,.2)}
+  .btn-reset{background:rgba(241,196,15,.1);color:var(--warn);border:1px solid rgba(241,196,15,.25)}
+  .btn-reset:hover{background:rgba(241,196,15,.2)}
+  .btn-extend{background:rgba(77,159,255,.1);color:var(--accent2);border:1px solid rgba(77,159,255,.25)}
+  .btn-extend:hover{background:rgba(77,159,255,.2)}
+  .btn-del{background:rgba(255,94,94,.05);color:#ff8080;border:1px solid rgba(255,94,94,.15)}
+  .btn-del:hover{background:rgba(255,94,94,.15)}
+
+  .machine-id{font-family:var(--mono);font-size:10px;color:var(--sub);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .empty-row td{text-align:center;color:var(--sub);padding:32px;font-family:var(--mono);font-size:12px}
+  .loading-row td{text-align:center;color:var(--sub);padding:24px;font-family:var(--mono);font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <h2>STUDOCU HELPER // ADMIN</h2>
+    <input type="password" id="pwd-input" placeholder="Nhap mat khau admin..." />
+    <button onclick="doLogin()">Dang nhap</button>
+    <div class="login-error" id="login-err"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main-screen">
+  <header>
+    <div class="logo">STUDOCU<span>HELPER</span> — ADMIN</div>
+    <div class="header-right">
+      <span class="tag">v2.0</span>
+      <button class="btn-logout" onclick="doLogout()">Dang xuat</button>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">TONG KEY</div>
+        <div class="stat-val blue" id="stat-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">DANG HOAT DONG</div>
+        <div class="stat-val green" id="stat-active">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">HET HAN</div>
+        <div class="stat-val yellow" id="stat-expired">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">BI VO HIEU HOA</div>
+        <div class="stat-val red" id="stat-inactive">—</div>
+      </div>
+    </div>
+
+    <!-- CREATE -->
+    <div class="panel">
+      <div class="panel-title">Tao Key Moi</div>
+      <div class="create-form">
+        <div class="field">
+          <label>So ngay</label>
+          <input type="number" id="days-input" value="30" min="1" max="365" style="width:90px"/>
+        </div>
+        <div class="field">
+          <label>Plan</label>
+          <select id="plan-input">
+            <option value="standard">Standard</option>
+            <option value="pro">Pro</option>
+            <option value="lifetime">Lifetime</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>So luong</label>
+          <input type="number" id="qty-input" value="1" min="1" max="50" style="width:80px"/>
+        </div>
+        <div class="field">
+          <label>Ghi chu</label>
+          <input type="text" id="note-input" placeholder="VD: khach hang A..." style="width:180px"/>
+        </div>
+        <button class="btn-create" onclick="createKeys()">+ Tao Key</button>
+      </div>
+      <div id="new-keys-output"></div>
+    </div>
+
+    <!-- KEY LIST -->
+    <div class="panel">
+      <div class="panel-title">Danh Sach Key</div>
+      <div class="search-row">
+        <input class="search-input" id="search-input" placeholder="Tim key, ghi chu, plan..." oninput="filterTable()"/>
+        <select class="filter-select" id="filter-status" onchange="filterTable()">
+          <option value="all">Tat ca</option>
+          <option value="active">Dang dung</option>
+          <option value="expired">Het han</option>
+          <option value="inactive">Bi tat</option>
+        </select>
+        <button class="btn-refresh" onclick="loadKeys()">Lam moi</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>KEY</th>
+              <th>Plan</th>
+              <th>Trang thai</th>
+              <th>Con lai</th>
+              <th>Het han</th>
+              <th>Machine ID</th>
+              <th>Ghi chu</th>
+              <th>Hanh dong</th>
+            </tr>
+          </thead>
+          <tbody id="keys-tbody">
+            <tr class="loading-row"><td colspan="8">Dang tai...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SERVER = window.location.origin;
+let ADMIN_TOKEN = '';
+let ALL_KEYS = [];
+
+// ── AUTH ──────────────────────────────────────────────────
+async function doLogin() {
+    const pwd = document.getElementById('pwd-input').value.trim();
+    if (!pwd) return;
+    const res = await fetch(`${SERVER}/api/admin/list`, {
+        headers: { 'x-admin-token': pwd }
+    });
+    if (res.status === 401) {
+        document.getElementById('login-err').textContent = 'Sai mat khau!';
+        return;
+    }
+    ADMIN_TOKEN = pwd;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-screen').style.display = 'block';
+    const data = await res.json();
+    ALL_KEYS = data.keys || [];
+    renderTable(ALL_KEYS);
+    updateStats(ALL_KEYS);
+}
+
+document.getElementById('pwd-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+});
+
+function doLogout() {
+    ADMIN_TOKEN = '';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('main-screen').style.display = 'none';
+}
+
+function adminFetch(url, opts = {}) {
+    return fetch(SERVER + url, {
+        ...opts,
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': ADMIN_TOKEN, ...(opts.headers||{}) }
+    });
+}
+
+// ── STATS ─────────────────────────────────────────────────
+function updateStats(keys) {
+    const now = new Date();
+    document.getElementById('stat-total').textContent    = keys.length;
+    document.getElementById('stat-active').textContent   = keys.filter(k => k.is_active && new Date(k.expires_at) > now).length;
+    document.getElementById('stat-expired').textContent  = keys.filter(k => new Date(k.expires_at) <= now).length;
+    document.getElementById('stat-inactive').textContent = keys.filter(k => !k.is_active).length;
+}
+
+// ── LOAD KEYS ─────────────────────────────────────────────
+async function loadKeys() {
+    document.getElementById('keys-tbody').innerHTML = '<tr class="loading-row"><td colspan="8">Dang tai...</td></tr>';
+    const res  = await adminFetch('/api/admin/list');
+    const data = await res.json();
+    ALL_KEYS = data.keys || [];
+    filterTable();
+    updateStats(ALL_KEYS);
+}
+
+// ── FILTER ────────────────────────────────────────────────
+function filterTable() {
+    const q      = document.getElementById('search-input').value.toLowerCase();
+    const status = document.getElementById('filter-status').value;
+    const now    = new Date();
+    const filtered = ALL_KEYS.filter(k => {
+        const matchQ = !q || k.key.toLowerCase().includes(q) ||
+            (k.note||'').toLowerCase().includes(q) ||
+            (k.plan||'').toLowerCase().includes(q);
+        let matchS = true;
+        if (status === 'active')   matchS = k.is_active && new Date(k.expires_at) > now;
+        if (status === 'expired')  matchS = new Date(k.expires_at) <= now;
+        if (status === 'inactive') matchS = !k.is_active;
+        return matchQ && matchS;
+    });
+    renderTable(filtered);
+}
+
+// ── RENDER TABLE ──────────────────────────────────────────
+function renderTable(keys) {
+    const tbody = document.getElementById('keys-tbody');
+    if (!keys.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Khong co key nao</td></tr>';
+        return;
+    }
+    const now = new Date();
+    tbody.innerHTML = keys.map(k => {
+        const exp     = new Date(k.expires_at);
+        const expired = exp <= now;
+        const daysLeft = Math.max(0, Math.ceil((exp - now) / 86400000));
+        const statusBadge = !k.is_active
+            ? '<span class="badge badge-inactive">Tat</span>'
+            : expired
+                ? '<span class="badge badge-expired">Het han</span>'
+                : '<span class="badge badge-active">Hoat dong</span>';
+        const daysClass = expired ? 'days-exp' : daysLeft <= 5 ? 'days-warn' : 'days-ok';
+        const daysText  = expired ? 'Het han' : `${daysLeft} ngay`;
+        const toggleBtn = k.is_active
+            ? `<button class="btn-sm btn-toggle-on" onclick="toggleKey('${k.key}')">Tat</button>`
+            : `<button class="btn-sm btn-toggle-off" onclick="toggleKey('${k.key}')">Bat</button>`;
+        return `<tr>
+            <td><span class="key-text">${k.key}</span></td>
+            <td><span class="badge badge-plan">${k.plan||'standard'}</span></td>
+            <td>${statusBadge}</td>
+            <td><span class="days-left ${daysClass}">${daysText}</span></td>
+            <td style="font-size:11px;font-family:var(--mono);color:var(--sub)">${exp.toLocaleDateString('vi-VN')}</td>
+            <td><div class="machine-id" title="${k.machine_id||''}">${k.machine_id ? k.machine_id.slice(0,16)+'...' : '—'}</div></td>
+            <td style="font-size:11px;color:var(--sub);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${k.note||'—'}</td>
+            <td><div class="action-row">
+                ${toggleBtn}
+                <button class="btn-sm btn-reset" onclick="resetMachine('${k.key}')" title="Reset may - cho phep doi may moi">Reset</button>
+                <button class="btn-sm btn-extend" onclick="extendKey('${k.key}')">+30d</button>
+                <button class="btn-sm btn-del" onclick="deleteKey('${k.key}')">Xoa</button>
+            </div></td>
+        </tr>`;
+    }).join('');
+}
+
+// ── ACTIONS ───────────────────────────────────────────────
+async function createKeys() {
+    const days = document.getElementById('days-input').value;
+    const plan = document.getElementById('plan-input').value;
+    const qty  = document.getElementById('qty-input').value;
+    const note = document.getElementById('note-input').value;
+    const res  = await adminFetch('/api/admin/create', {
+        method: 'POST',
+        body: JSON.stringify({ days, plan, note, quantity: parseInt(qty) })
+    });
+    const data = await res.json();
+    if (!data.ok) return alert('Loi tao key: ' + data.error);
+
+    const out = document.getElementById('new-keys-output');
+    out.style.display = 'block';
+    out.innerHTML = `<div class="new-keys-label">Key vua tao (${data.keys.length} key):</div>` +
+        data.keys.map(k =>
+            `<div class="key-chip">
+                <span>${k.key} — ${plan} — ${days} ngay</span>
+                <button class="btn-copy" onclick="copyText('${k.key}', this)">Copy</button>
+            </div>`
+        ).join('');
+
+    await loadKeys();
+}
+
+function copyText(text, btn) {
+    navigator.clipboard.writeText(text);
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+}
+
+async function toggleKey(key) {
+    await adminFetch(`/api/admin/toggle/${key}`, { method: 'PATCH' });
+    await loadKeys();
+}
+
+async function resetMachine(key) {
+    if (!confirm(`Reset machine ID cua key ${key}?\nNguoi dung se co the dung key tren may khac.`)) return;
+    await adminFetch(`/api/admin/reset/${key}`, { method: 'PATCH' });
+    await loadKeys();
+}
+
+async function extendKey(key) {
+    const days = prompt(`Gia han them bao nhieu ngay cho key ${key}?`, '30');
+    if (!days) return;
+    await adminFetch(`/api/admin/extend/${key}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ days: parseInt(days) })
+    });
+    await loadKeys();
+}
+
+async function deleteKey(key) {
+    if (!confirm(`XOA VINH VIEN key ${key}?\nKhong the hoan tac!`)) return;
+    await adminFetch(`/api/admin/delete/${key}`, { method: 'DELETE' });
+    await loadKeys();
+}
+</script>
+</body>
+</html>
